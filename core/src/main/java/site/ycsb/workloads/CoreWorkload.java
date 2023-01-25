@@ -224,11 +224,21 @@ public class CoreWorkload extends Workload {
    * The name of the property for the proportion of transactions that are inserts.
    */
   public static final String INSERT_PROPORTION_PROPERTY = "insertproportion";
-
   /**
    * The default proportion of transactions that are inserts.
    */
   public static final String INSERT_PROPORTION_PROPERTY_DEFAULT = "0.0";
+
+
+  /**
+   * The name of the property for the proportion of transactions that are deletes.
+   */
+  public static final String DELETE_PROPORTION_PROPERTY = "deleteproportion";
+
+  /**
+   * The name of the property for the proportion of transactions that are deletes.
+   */
+  public static final String DELETE_PROPORTION_PROPERTY_DEFAULT = "0.0";
 
   /**
    * The name of the property for the proportion of transactions that are scans.
@@ -672,6 +682,9 @@ public class CoreWorkload extends Workload {
     case "SCAN":
       doTransactionScan(db);
       break;
+    case "DELETE":
+      doTransactionDelete(db);
+      break;
     default:
       doTransactionReadModifyWrite(db);
     }
@@ -833,6 +846,14 @@ public class CoreWorkload extends Workload {
 
     db.update(table, keyname, values);
   }
+  public void doTransactionDelete(DB db) {
+    // choose a random key
+    long keynum = nextKeynum();
+
+    String keyname = CoreWorkload.buildKeyName(keynum, zeropadding, orderedinserts);
+
+    db.delete(table, keyname);
+  }
 
   public void doTransactionInsert(DB db) {
     // choose the next key
@@ -868,6 +889,8 @@ public class CoreWorkload extends Workload {
         p.getProperty(UPDATE_PROPORTION_PROPERTY, UPDATE_PROPORTION_PROPERTY_DEFAULT));
     final double insertproportion = Double.parseDouble(
         p.getProperty(INSERT_PROPORTION_PROPERTY, INSERT_PROPORTION_PROPERTY_DEFAULT));
+    final double deleteproportion = Double.parseDouble(
+        p.getProperty(DELETE_PROPORTION_PROPERTY, DELETE_PROPORTION_PROPERTY_DEFAULT));
     final double scanproportion = Double.parseDouble(
         p.getProperty(SCAN_PROPORTION_PROPERTY, SCAN_PROPORTION_PROPERTY_DEFAULT));
     final double readmodifywriteproportion = Double.parseDouble(p.getProperty(
@@ -884,6 +907,9 @@ public class CoreWorkload extends Workload {
 
     if (insertproportion > 0) {
       operationchooser.addValue(insertproportion, "INSERT");
+    }
+    if (deleteproportion > 0) {
+      operationchooser.addValue(deleteproportion, "DELETE");
     }
 
     if (scanproportion > 0) {
