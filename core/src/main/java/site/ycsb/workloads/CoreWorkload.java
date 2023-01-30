@@ -380,6 +380,7 @@ public class CoreWorkload extends Workload {
   protected int insertionRetryInterval;
 
   private Measurements measurements = Measurements.getMeasurements();
+  private HashSet<Long> deletedKeynumSet = new HashSet<>();
 
   public static String buildKeyName(long keynum, int zeropadding, boolean orderedinserts) {
     if (!orderedinserts) {
@@ -723,11 +724,12 @@ public class CoreWorkload extends Workload {
     if (keychooser instanceof ExponentialGenerator) {
       do {
         keynum = transactioninsertkeysequence.lastValue() - keychooser.nextValue().intValue();
-      } while (keynum < 0);
+      } while (keynum < 0 || deletedKeynumSet.contains(keynum));
     } else {
       do {
         keynum = keychooser.nextValue().intValue();
-      } while (keynum > transactioninsertkeysequence.lastValue());
+      } while (keynum > transactioninsertkeysequence.lastValue()
+          || deletedKeynumSet.contains(keynum));
     }
     return keynum;
   }
@@ -853,6 +855,7 @@ public class CoreWorkload extends Workload {
     String keyname = CoreWorkload.buildKeyName(keynum, zeropadding, orderedinserts);
 
     db.delete(table, keyname);
+    deletedKeynumSet.add(keynum);
   }
 
   public void doTransactionInsert(DB db) {
